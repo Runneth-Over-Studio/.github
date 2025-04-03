@@ -4,28 +4,6 @@ Founded for the under-served young-adult/adult Christian in the gaming space. Ma
 
 <https://runnethoverstudio.com>
 
-Modus Operandi
---------------
-
-> "What we want is not more little books about Christianity, but more little books by Christians on other subjects – with their Christianity latent." — C.S. Lewis
-
-- **Work Heartily**
-  - *Colossians 3:23*
-  - First and foremost, we strive to point to the glory of God in everything we produce.
-
-- **Give Cheerfully**
-  - *2 Corinthians 9:7*
-   - We are publicly committed to donating 10% of all profits to charities and other non-profits.
-
-- **Be Unashamed**
-  - *2 Timothy 2:15*
-  - Professionally handle themes with care and reverence.
-
-- **Live Quietly**
-  - *1 Thessalonians 4:11*
-   - Simply make the best games we can. Focus on the work and in a manner that on its own demonstrates our values. 
-
-
 Founder
 -------
 <p align="left">
