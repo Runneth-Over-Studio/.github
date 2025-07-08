@@ -1,6 +1,6 @@
 # Runneth Over Studio
 
-Founded to create thoughtful, engaging experiences for players who feel underserved by the current gaming landscape. Too often, mature games rely on glorifying objectionable themes, while many Christian games are limited by a Sunday school aesthetic. Runneth Over Studio exists to challenge that binary. Drawing inspiration from the rich legacy of Christian art—evocative, bold, and enduring—I aim to explore deep themes and allegory through compelling gameplay. Our mission is to craft games that resonate both creatively and spiritually, without compromising on fun or depth.
+Founded to create thoughtful, engaging experiences for players who feel underserved by the current gaming landscape. Too often, mature games rely on glorifying objectionable themes, while many Christian games are limited by a Sunday school aesthetic. Runneth Over Studio exists to challenge that binary. Drawing inspiration from the rich legacy of Christian art (evocative, bold, and enduring), I aim to explore deep themes and allegories through compelling gameplay. Our mission is to craft games that resonate both creatively and spiritually, without compromising on fun or depth.
 
 <https://runnethoverstudio.com>
 
