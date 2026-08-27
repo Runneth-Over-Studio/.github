@@ -390,28 +390,79 @@ agents or automation may exercise capabilities.
 
 ------------------------------------------------------------------------
 
-## 10. Expected Failures and Exceptions
+## 10. Failure Modeling and Exceptions
 
-Expected operational states should generally be represented explicitly
-rather than communicated through exceptions, especially for
-integrations.
+Expected operational outcomes should generally be represented explicitly
+rather than communicated through exceptions. When an operation has
+multiple anticipated outcomes that callers are expected to handle, prefer
+an appropriate result type, discriminated result, Try pattern, or other
+explicit representation.
 
-Examples:
+Exceptions play a supporting role. Use them for genuinely exceptional
+conditions, programming/contract violations where appropriate, and
+unexpected failures that cannot reasonably be represented as part of the
+operation's normal result contract. Do not use exceptions as ordinary
+control flow.
 
 ``` text
-Success
-NotFound
-Unavailable
-Unauthorized
-Forbidden
-InvalidResponse
+Operation outcome
+│
+├── Expected outcome
+│   ├── Success
+│   ├── NotFound
+│   ├── Unauthorized
+│   ├── Forbidden
+│   ├── Unavailable
+│   └── ValidationFailure
+│
+│       → explicit state / Result type
+│
+└── Exceptional failure
+    ├── violated programming invariant
+    ├── unexpected implementation failure
+    └── condition the current abstraction cannot reasonably model/recover from
+
+        → exception
 ```
 
-A result type may be appropriate. Use exceptions for exceptional or
-unexpected failures rather than normal control flow.
+Do not catch an unexpected exception merely to convert every possible
+failure into a generic failure Result. Doing so destroys one of the main
+benefits of exceptions: unexpected failures propagate with diagnostic
+information and stack traces.
 
-Reference: [Exception-Handling Antipatterns and API
-Design](https://www.infoq.com/articles/Exceptions-API-Design/)
+🔴 Destroys diagnostic information:
+``` csharp
+catch (Exception ex)
+{
+    return Result.Failure(ex.Message);
+}
+```
+
+🔴 Hides bug:
+``` csharp
+catch (NullReferenceException)
+{
+    return KnowledgeResult.InvalidResponse();
+}
+```
+
+🟢 Appropriate at the integration boundary, because we're deliberately
+translating a provider-specific failure into an anticipated application
+state:
+``` csharp
+catch (JoplinAuthenticationException)
+{
+    return KnowledgeResult.Unauthorized();
+}
+```
+
+| Condition                                                       | Preferred mechanism                            |
+| --------------------------------------------------------------- | ---------------------------------------------- |
+| Expected business/operational outcome                           | Explicit state / `Result<T>`                   |
+| Caller/programmer violates API contract                         | Standard exception where appropriate           |
+| Unexpected implementation/system failure                        | Exception                                      |
+| Provider exception representing an expected application outcome | Catch at boundary and translate to Result      |
+| Unknown/unexpected provider exception                           | Allow to propagate or wrap with useful context |
 
 ------------------------------------------------------------------------
 
