@@ -75,78 +75,127 @@ consume a non-LTS release without a compelling reason.
 
 ## 3. Solution Architecture
 
-Typically solutions should follow a Data, Business, Presentation
-architecture, extended where responsibilities do not naturally belong
-to those three tiers.
+Solutions should generally follow a modified three-tier architecture centered on **Business**, with **Data** and **Integrations** treated as implementation boundaries that satisfy application-facing contracts defined by Business.
 
-``` text
-MyApp.Data
-    Persists and retrieves application-owned state.
+The familiar Data, Business, and Presentation responsibilities remain, but dependencies across persistence and external-provider boundaries should follow the **Dependency Inversion Principle**. Business defines the capabilities the application requires; Data and Integrations reference Business and implement those contracts.
 
+```text
+                         Business
+                      ▲            ▲
+                      │            │
+                    Data      Integrations
+
+                Presentation.*
+                 /     |      \
+                ▼      ▼       ▼
+           Business   Data   Integrations
+```
+
+Conceptually:
+
+```text
 MyApp.Business
     Defines business concepts, application behavior, validation,
-    protocols, and intentionally exposed contracts.
+    application-facing DTOs, and contracts for capabilities required
+    from persistence and external providers.
+
+MyApp.Data
+    Implements persistence capabilities required by Business and
+    persists application-owned state.
 
 MyApp.Integrations
-    Adapts external applications, standards, and services
-    into capabilities understood by the application.
+    Implements external capabilities required by Business by adapting
+    third-party applications, standards, protocols, and services.
 
 MyApp.Presentation.*
     Provides interfaces through which users interact with the
-    application. Also serves as the composition root, configuring DI at startup.
-
-            services.AddBusinessServices();
-            services.AddDataServices();
-            services.AddIntegrationServices();
+    application and normally serves as the composition root that
+    registers concrete Data and Integration implementations with
+    dependency injection.
 ```
+
+A typical composition root may resemble:
+
+```csharp
+services.AddBusinessServices();
+services.AddDataServices();
+services.AddIntegrationServices();
+```
+
+Business is the architectural center even though the executable Presentation project commonly references Business, Data, and Integrations in order to compose the application at startup.
+
+### Business
+
+`*.Business` owns application and domain behavior, including business
+concepts, processes/services, validation, application-facing DTOs,
+expected application failure states, and contracts describing the
+persistence and external capabilities the application requires.
+
+Business should not depend on persistence implementations,
+provider-specific integrations, or presentation technology.
+
+For example, if Business requires Goals to be persisted, Business may
+define an `IGoalRepository` contract. If it requires access to external
+knowledge, it may define an `IKnowledgeProvider` contract. Data and
+Integrations implement those contracts rather than Business referencing
+their concrete implementations.
 
 ### Data
 
-`*.Data` owns persistence concerns for application-owned information,
-including database access, persistent/data entities, schema and
-migrations, persistence-specific mapping, repository/store implementations, local
-caches and indexes, and synchronization persistence state where
-appropriate.
+`*.Data` owns persistence implementation concerns for application-owned
+information, including database access, persistent/data entities, schema
+and migrations, persistence-specific mapping, repository/store
+implementations, local caches and indexes, and synchronization
+persistence state where appropriate.
+
+Data references Business as necessary to implement Business-defined
+persistence contracts.
 
 Data access must not implement business validation or application
 decisions. Persistence implementation details should not leak into
 Business or Presentation.
 
-### Business
-
-`*.Business` owns application and domain behavior, including
-business concepts, processes/services, validation, application DTOs,
-provider protocols/contracts, semantic relationships, and expected
-application failure states.
-
-Business should not define persistence-specific entities or depend on
-persistence implementations. Business defines the persistence capabilities
-it requires through application-facing contracts; Data implements those
-contracts. Business should remain independent of presentation technology.
-
 ### Integrations
 
-External systems are capabilities, not merely data stores. Rather than
-being forced into `*.Data`, provider implementations should generally
-live in an integration project organized by provider-specific namespaces
-or folders. Dedicated integration projects may be used when an
-integration's size, dependencies, or isolation requirements justify them.
+External systems are capabilities, not merely data stores. Provider
+implementations should therefore generally live in an Integrations
+boundary rather than being forced into `*.Data`.
+
+A solution will commonly use a single integration project organized by
+provider-specific namespaces or folders:
+
+```text
+MyApp.Integrations/
+├── Joplin/
+├── GitHub/
+├── Nextcloud/
+└── ...
+```
+
+Dedicated integration projects may be introduced when an integration's
+size, dependencies, deployment needs, or isolation requirements justify
+them.
 
 Integration implementations:
 
--   Understand the external provider API, protocol, and data formats.
--   Implement capability contracts.
--   Translate provider-specific representations into application-defined
-    contracts and DTOs.
--   Keep provider-specific types from leaking into `*.Business`.
--   Do not become canonical owners of external source data.
+* Understand the external provider's API, protocol, authentication, and
+  data formats.
+* Implement application-facing capability contracts defined by Business.
+* Translate provider-specific representations into application-defined
+  contracts and DTOs.
+* Keep provider-specific types from leaking into Business.
+* Do not become canonical owners of external source data unless the
+  application explicitly owns that information.
+
+Integrations reference Business as necessary to implement its capability
+contracts.
 
 ### Presentation
 
 There may be multiple presentations over the same business
 functionality.
 
-``` text
+```text
 MyApp.Presentation.Desktop
 MyApp.Presentation.Web
 MyApp.Presentation.Mobile
@@ -156,6 +205,15 @@ MyApp.Presentation.Cli
 Presentation projects do not implement business or persistence logic.
 Presentation-specific state and binding models belong in the appropriate
 Presentation project.
+
+The executable Presentation project normally acts as the application's
+**composition root**. It may reference Business, Data, and Integrations
+so that concrete implementations can be registered with dependency
+injection.
+
+This technical visibility does not permit Presentation to bypass
+Business and directly consume persistence or provider implementation
+details during normal application behavior.
 
 ------------------------------------------------------------------------
 
